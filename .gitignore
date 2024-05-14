@@ -30,3 +30,24 @@
 *.exe
 *.out
 *.app
+
+# CMake generated files/directories
+/build/
+/CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+*.cmake
+!*.cmake.in
+Makefile
+
+# Ignore editor settings and backup files
+*~
+*.swp
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+
+# Ignore OS generated files
+.DS_Store
+Thumbs.db
