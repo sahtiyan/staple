@@ -7,15 +7,14 @@
 
 class ModelReset {
 public:
-    ModelReset(const std::string& modelsDirectory);
-    ~ModelReset();
-
+    ModelReset(const std::string& modelsDirectory, const std::string& cfgFilePath);
     bool resetModelsToDefault() const;
 
 private:
     std::string modelsDirectory;
-    std::vector<std::string> getDefaultModelFilenames() const;
-    bool copyModel(const std::string& source, const std::string& destination) const;
+    std::string cfgFilePath;
+    std::vector<std::string> defaultModelFilenames;
+    void loadDefaultModelFilenames();
 };
 
 #endif // MODELRESET_H

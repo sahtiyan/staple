@@ -3,53 +3,51 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <sstream>
 
-// std::filesystem namespace kısaltması için bir alias
 namespace fs = std::filesystem;
 
-ModelReset::ModelReset(const std::string& modelsDirectory)
-: modelsDirectory(modelsDirectory) {
-    // Constructor
+ModelReset::ModelReset(const std::string& modelsDir, const std::string& cfgFile)
+    : modelsDirectory(modelsDir), cfgFilePath(cfgFile) {
+    loadDefaultModelFilenames();
 }
 
-ModelReset::~ModelReset() {
-    // Destructor
-}
+void ModelReset::loadDefaultModelFilenames() {
+    std::ifstream configFile(cfgFilePath);
+    if (!configFile.is_open()) {
+        std::cerr << "Unable to open config file: " << cfgFilePath << std::endl;
+        throw std::runtime_error("Configuration file could not be opened.");
+    }
 
-std::vector<std::string> ModelReset::getDefaultModelFilenames() const {
-    // Burası varsayılan modellerin isimlerini döndürmek için placeholder.
-    // Gerçek isimleri oyunun klasör yapısına göre ayarlamanız gerekecek.
-    return {"v_ak47.mdl", "v_m4a1.mdl", /* ... diğer modeller ... */};
-}
-
-bool ModelReset::resetModelsToDefault() const {
-    try {
-        auto defaultModels = getDefaultModelFilenames();
-        bool allCopied = true;
-        for (const auto& modelName : defaultModels) {
-            fs::path sourcePath = fs::current_path() / "default_models" / modelName;
-            fs::path destinationPath = fs::path(modelsDirectory) / modelName;
-
-            if (!fs::exists(sourcePath)) {
-                std::cerr << "Default model file not found: " << sourcePath << std::endl;
-                allCopied = false;
-                continue;
+    std::string line;
+    while (std::getline(configFile, line)) {
+        if (line.rfind("default_models=", 0) == 0) {
+            std::string modelsList = line.substr(15); // Remove the key
+            std::istringstream ss(modelsList);
+            std::string modelName;
+            while (std::getline(ss, modelName, ',')) {
+                defaultModelFilenames.push_back(modelName);
             }
-
-            // Model dosyasını resetle
-            fs::copy(sourcePath, destinationPath, fs::copy_options::overwrite_existing);
+            break;
         }
-        return allCopied;
-    } catch (const fs::filesystem_error& e) {
-        std::cerr << "Filesystem error: " << e.what() << std::endl;
-        return false;
-    } catch (const std::exception& e) {
-        std::cerr << "Standard exception: " << e.what() << std::endl;
-        return false;
     }
 }
 
-bool ModelReset::copyModel(const std::string& source, const std::string& destination) const {
-    // Bu fonksiyon artık kullanılmıyor, doğrudan resetModelsToDefault içinde işlem yapıyoruz.
-    return false;
+bool ModelReset::resetModelsToDefault() const {
+    for (const auto& modelName : defaultModelFilenames) {
+        fs::path sourcePath = fs::path("res/default_models") / modelName;
+        fs::path targetPath = fs::path(modelsDirectory) / modelName;
+        try {
+            if (fs::exists(sourcePath)) {
+                fs::copy(sourcePath, targetPath, fs::copy_options::overwrite_existing);
+            } else {
+                std::cerr << "Default model file not found: " << sourcePath << std::endl;
+                return false;
+            }
+        } catch (const fs::filesystem_error& e) {
+            std::cerr << "Filesystem error: " << e.what() << std::endl;
+            return false;
+        }
+    }
+    return true;
 }
